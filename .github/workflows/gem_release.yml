@@ -1,0 +1,46 @@
+name: Gem Release Workflow
+
+on:
+  workflow_call:
+    inputs:
+      working_directory:
+        required: false
+        type: string
+        default: "."
+
+jobs:
+  release:
+    defaults:
+      run:
+        working-directory: ubuntu-latest
+
+    runs-on: vm
+
+    env:
+      GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+    steps:
+      - name: 📚 Git Checkout
+        uses: actions/checkout@v2
+
+      - name: 💎 Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: ✨ Build & Release Gem
+        run: |
+          mkdir -p $HOME/.gem
+          touch $HOME/.gem/credentials
+          chmod 0600 $HOME/.gem/credentials
+          printf -- "---\n:github: Bearer ${GITHUB_TOKEN}\n" > $HOME/.gem/credentials
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          bundle config https://rubygems.pkg.github.com/$GITHUB_REPOSITORY_OWNER Bearer $GITHUB_TOKEN
+          bundle config set gem.push_key github
+          bundle exec rake release
+
+      - name: 🔎 Create GitHub Release
+        run: |
+          version="$(ruby -e 'puts "v#{Gem::Specification.load(Dir.glob("*.gemspec").first).version}"')"
+          gh release create $version pkg/* --generate-notes
