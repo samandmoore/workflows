@@ -22,9 +22,6 @@ jobs:
 
     runs-on: vm
 
-    env:
-      GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-
     steps:
       - name: 📚 Git Checkout
         uses: actions/checkout@v2
@@ -45,8 +42,13 @@ jobs:
           bundle config https://rubygems.pkg.github.com/$GITHUB_REPOSITORY_OWNER Bearer $GITHUB_TOKEN
           bundle config set gem.push_key github
           bundle exec rake release
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
 
       - name: 🔎 Create GitHub Release
         run: |
           version="$(ruby -e 'puts "v#{Gem::Specification.load(Dir.glob("*.gemspec").first).version}"')"
           gh release create "${{inputs.release_prefix}}$version" pkg/* --generate-notes
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
