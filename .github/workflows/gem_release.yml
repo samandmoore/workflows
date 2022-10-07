@@ -44,11 +44,13 @@ jobs:
           bundle exec rake release
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GEM_RELEASE_PREFIX: ${{inputs.release_prefix}}
 
 
       - name: 🔎 Create GitHub Release
         run: |
-          version="$(ruby -e 'puts "v#{Gem::Specification.load(Dir.glob("*.gemspec").first).version}"')"
-          gh release create "${{inputs.release_prefix}}$version" pkg/* --generate-notes
+          RELEASE_NAME="$(ruby -e 'puts [ENV.fetch("GEM_RELEASE_PREFIX", ""), "v#{Gem::Specification.load(Dir.glob("*.gemspec").first).version}"].select {|s| s != ""}.join("-")')"
+          gh release create "$RELEASE_NAME" pkg/* --generate-notes
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GEM_RELEASE_PREFIX: ${{inputs.release_prefix}}
