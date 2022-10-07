@@ -18,9 +18,9 @@ jobs:
   release:
     defaults:
       run:
-        working-directory: ubuntu-latest
+        working-directory: ${{inputs.working_directory}}
 
-    runs-on: vm
+    runs-on: ubuntu-latest
 
     steps:
       - name: 📚 Git Checkout
