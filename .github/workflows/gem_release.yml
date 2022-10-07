@@ -4,9 +4,15 @@ on:
   workflow_call:
     inputs:
       working_directory:
+        description: 'The directory to run the workflow in (useful for monorepos).'
         required: false
         type: string
         default: "."
+      release_prefix:
+        description: 'A prefix for the GitHub release and tag, e.g. "widgets" would result in a tag named "widgets-v0.0.1" (useful for monorepos).'
+        required: false
+        type: string
+        default: ""
 
 jobs:
   release:
@@ -43,4 +49,4 @@ jobs:
       - name: 🔎 Create GitHub Release
         run: |
           version="$(ruby -e 'puts "v#{Gem::Specification.load(Dir.glob("*.gemspec").first).version}"')"
-          gh release create $version pkg/* --generate-notes
+          gh release create "${{inputs.release_prefix}}$version" pkg/* --generate-notes
