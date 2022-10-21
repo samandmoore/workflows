@@ -23,7 +23,7 @@ jobs:
   release:
     defaults:
       run:
-        working-directory: ${{inputs.working_directory}}
+        working-directory: ${{ inputs.working_directory }}
 
     runs-on: ubuntu-latest
 
@@ -41,6 +41,7 @@ jobs:
         if: ${{ inputs.force || steps.gem_change.outputs.diff }}
         uses: ruby/setup-ruby@v1
         with:
+          working-directory: ${{ inputs.working_directory }}
           bundler-cache: true
 
       - name: ✨ Build & Release Gem
@@ -56,8 +57,8 @@ jobs:
           bundle config set gem.push_key github
           bundle exec rake release
         env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          GEM_RELEASE_PREFIX: ${{inputs.release_prefix}}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEM_RELEASE_PREFIX: ${{ inputs.release_prefix }}
 
       - name: 🔎 Create GitHub Release
         if: ${{ inputs.force || steps.gem_change.outputs.diff }}
@@ -65,5 +66,5 @@ jobs:
           RELEASE_NAME="$(ruby -e 'puts [ENV.fetch("GEM_RELEASE_PREFIX", ""), "v#{Gem::Specification.load(Dir.glob("*.gemspec").first).version}"].select {|s| s != ""}.join("-")')"
           gh release create "$RELEASE_NAME" pkg/* --generate-notes
         env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          GEM_RELEASE_PREFIX: ${{inputs.release_prefix}}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEM_RELEASE_PREFIX: ${{ inputs.release_prefix }}
