@@ -13,6 +13,11 @@ on:
         required: false
         type: string
         default: ""
+      force:
+        description: 'Force a release to run regardless of version change'
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   release:
@@ -24,14 +29,22 @@ jobs:
 
     steps:
       - name: 📚 Git Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      - name: Check Gem modified
+        uses: technote-space/get-diff-action@v6
+        id: gem_change
+        with:
+          PATTERNS: lib/**/version.rb
 
       - name: 💎 Setup Ruby
+        if: ${{ inputs.force || steps.gem_change.outputs.diff }}
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
 
       - name: ✨ Build & Release Gem
+        if: ${{ inputs.force || steps.gem_change.outputs.diff }}
         run: |
           mkdir -p $HOME/.gem
           touch $HOME/.gem/credentials
@@ -46,8 +59,8 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           GEM_RELEASE_PREFIX: ${{inputs.release_prefix}}
 
-
       - name: 🔎 Create GitHub Release
+        if: ${{ inputs.force || steps.gem_change.outputs.diff }}
         run: |
           RELEASE_NAME="$(ruby -e 'puts [ENV.fetch("GEM_RELEASE_PREFIX", ""), "v#{Gem::Specification.load(Dir.glob("*.gemspec").first).version}"].select {|s| s != ""}.join("-")')"
           gh release create "$RELEASE_NAME" pkg/* --generate-notes
